@@ -174,3 +174,52 @@ button.delete {
         text-align: center;
     }
 }
+
+/* Zaktualizowany styl karty postaci */
+.card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-left: 8px solid var(--navy);
+    padding: 20px;
+    margin-bottom: 25px;
+    position: relative;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
+    
+    /* DODAJEMY TO: */
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+/* Styl kwadratowego zdjęcia */
+.char-photo {
+    width: 120px;
+    height: 120px;
+    object-fit: cover; /* Wypełnia kwadrat bez rozciągania */
+    border-radius: 4px;
+    border: 2px solid var(--gold);
+    flex-shrink: 0; /* Zdjęcie nie będzie się zwężać */
+}
+
+/* Kontener na tekst po prawej */
+.card-content {
+    flex-grow: 1;
+}
+
+/* Poprawka dla telefonów - zdjęcie wskakuje nad tekst */
+@media (max-width: 600px) {
+    .card {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+        .char-photo {
+        width: 120px;
+        height: 120px;
+        object-fit: cover; /* Bardzo ważne: zapobiega rozciąganiu herbu */
+        background-color: #eee; /* Lekkie tło, gdyby grafika była przezroczysta */
+        border: 2px solid var(--gold);
+        flex-shrink: 0;
+    }
+}
