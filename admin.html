@@ -3,164 +3,202 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Administratora - Państwo</title>
+    <title>Panel Administracyjny - Rejestr Państwowy</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="style.css"> <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 20px auto; padding: 0 20px; }
-        .hidden { display: none; }
-        section { border: 1px solid #ccc; padding: 20px; margin-bottom: 20px; border-radius: 8px; }
-        form { display: flex; flex-direction: column; gap: 10px; }
-        input, textarea, select { padding: 8px; }
-        button { padding: 10px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
-        button.delete { background: #dc3545; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 5px 0; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <h1>Panel Administratora</h1>
+    <header>
+        <div class="header-content">
+            <img src="herb.png" alt="Herb" class="gov-logo">
+            <div class="header-text">
+                <h1>Centralne Biuro Postaci i Ról</h1>
+                <p>System Ewidencji Tożsamości i Archiwizacji</p>
+            </div>
+        </div>
+    </header>
 
-    <section id="login-section">
-        <h2>Zaloguj się</h2>
-        <form id="login-form">
-            <input type="email" id="login-email" placeholder="E-mail admina" required>
-            <input type="password" id="login-password" placeholder="Hasło" required>
-            <button type="submit">Zaloguj</button>
-        </form>
-    </section>
-
-    <div id="admin-panel" class="hidden">
-        <button id="logout-btn" style="float: right;">Wyloguj</button>
-        <p>Witaj, Panie Administratorze!</p>
-
-        <section>
-            <h3>Stwórz Nową Rolę</h3>
-            <form id="role-form">
-                <input type="text" id="role-name" placeholder="Nazwa roli (np. Rycerz)" required>
-                <textarea id="role-desc" placeholder="Opis roli"></textarea>
-                <button type="submit">Dodaj Rolę</button>
+    <div class="container">
+        <section id="login-section">
+            <h2>Autoryzacja Urzędowa</h2>
+            <form id="login-form">
+                <input type="email" id="login-email" placeholder="E-mail" required>
+                <input type="password" id="login-password" placeholder="Hasło" required>
+                <button type="submit">Zaloguj</button>
             </form>
-            <div id="roles-list"></div>
         </section>
 
-        <section>
-            <h3>Stwórz Nową Postać</h3>
-            <form id="char-form">
-                <input type="text" id="char-name" placeholder="Imię postaci" required>
-                <textarea id="char-bio" placeholder="Biografia"></textarea>
-                <select id="char-role" required>
-                    <option value="">-- Wybierz rolę --</option>
-                </select>
-                <button type="submit">Dodaj Postać</button>
-            </form>
-            <div id="chars-list"></div>
-        </section>
+        <div id="admin-panel" class="hidden">
+            <button id="logout-btn" class="delete" style="float: right;">Wyloguj</button>
+            
+            <section>
+                <h3>Zarządzanie Rolami</h3>
+                <form id="role-form">
+                    <input type="hidden" id="role-id">
+                    <input type="text" id="role-name" placeholder="Nazwa roli" required>
+                    <textarea id="role-desc" placeholder="Opis roli"></textarea>
+                    <label>Kolor kafelka:</label>
+                    <input type="color" id="role-color" value="#002366">
+                    <button type="submit" id="role-submit-btn">Zapisz Rolę</button>
+                </form>
+                <div id="roles-list"></div>
+            </section>
+
+            <section>
+                <h3>Ewidencja Postaci</h3>
+                <form id="char-form">
+                    <input type="hidden" id="char-id">
+                    
+                    <label>Numer Rejestru (ID):</label>
+                    <input type="number" id="char-registry-no" placeholder="Zostaw puste dla auto-numeracji">
+                    
+                    <label>Imię i Nazwisko:</label>
+                    <input type="text" id="char-name" required>
+                    
+                    <label>Biografia:</label>
+                    <textarea id="char-bio"></textarea>
+
+                    <label>Zdjęcie Postaci:</label>
+                    <input type="file" id="char-image" accept="image/*">
+                    <input type="hidden" id="char-foto-url">
+
+                    <label>Przypisz Role (Ctrl + klik):</label>
+                    <select id="char-roles" multiple style="height: 100px;"></select>
+                    
+                    <button type="submit" id="char-submit-btn">Zapisz w Rejestrze</button>
+                </form>
+                <div id="chars-list"></div>
+            </section>
+        </div>
     </div>
 
     <script>
-    // 1. Dane dostępowe (Upewnij się, że są poprawne!)
-    const supabaseUrl = 'https://dagmflfhbvgszthpinqd.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhZ21mbGZoYnZnc3p0aHBpbnFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NzY4ODgsImV4cCI6MjA5MjM1Mjg4OH0.cDkiR3zL68xNOi1p7NQeVYoXoVqoQk70SLmhG8xmMFs';
+        const supabaseUrl = 'https://dagmflfhbvgszthpinqd.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhZ21mbGZoYnZnc3p0aHBpbnFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NzY4ODgsImV4cCI6MjA5MjM1Mjg4OH0.cDkiR3zL68xNOi1p7NQeVYoXoVqoQk70SLmhG8xmMFs';
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // 2. Inicjalizacja klienta w wersji przeglądarkowej
-    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-
-    // Pobranie elementów z HTML
-    const loginForm = document.getElementById('login-form');
-    const loginSection = document.getElementById('login-section');
-    const adminPanel = document.getElementById('admin-panel');
-    const charRoleSelect = document.getElementById('char-role');
-
-    // --- 1. LOGOWANIE ---
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('login-email').value;
-        const password = document.getElementById('login-password').value;
-
-        // Używamy supabaseClient zamiast supabase
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-
-        if (error) {
-            alert("Błąd logowania: " + error.message);
-        } else {
-            console.log("Zalogowano!", data);
-            loginSection.classList.add('hidden');
-            adminPanel.classList.remove('hidden');
-            refreshData();
-        }
-    });
-
-    // --- 2. DODAWANIE ROLI ---
-    document.getElementById('role-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const nazwa = document.getElementById('role-name').value;
-        const opis = document.getElementById('role-desc').value;
-
-        const { error } = await supabaseClient.from('role').insert([{ nazwa, opis }]);
-        if (error) alert("Błąd dodawania roli: " + error.message);
-        else {
-            e.target.reset();
-            refreshData();
-        }
-    });
-
-    // --- 3. DODAWANIE POSTACI ---
-    document.getElementById('char-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const imie = document.getElementById('char-name').value;
-        const biografia = document.getElementById('char-bio').value;
-        const rola_id = document.getElementById('char-role').value;
-
-        const { error } = await supabaseClient.from('postacie').insert([{ imie, biografia, rola_id }]);
-        if (error) alert("Błąd dodawania postaci: " + error.message);
-        else {
-            e.target.reset();
-            refreshData();
-        }
-    });
-
-    // --- 4. ODŚWIEŻANIE DANYCH ---
-    async function refreshData() {
-        // Pobierz role do listy rozwijanej
-        const { data: role } = await supabaseClient.from('role').select('*');
-        charRoleSelect.innerHTML = '<option value="">-- Wybierz rolę --</option>';
-        if (role) {
-            role.forEach(r => {
-                charRoleSelect.innerHTML += `<option value="${r.id}">${r.nazwa}</option>`;
+        // --- LOGIN ---
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const { error } = await supabaseClient.auth.signInWithPassword({
+                email: document.getElementById('login-email').value,
+                password: document.getElementById('login-password').value
             });
+            if (error) alert(error.message);
+            else {
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('admin-panel').classList.remove('hidden');
+                refreshData();
+            }
+        });
+
+        // --- ZAPIS ROLI ---
+        document.getElementById('role-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('role-id').value;
+            const data = {
+                nazwa: document.getElementById('role-name').value,
+                opis: document.getElementById('role-desc').value,
+                kolor: document.getElementById('role-color').value
+            };
+            const { error } = id ? await supabaseClient.from('role').update(data).eq('id', id) : await supabaseClient.from('role').insert([data]);
+            if (error) alert(error.message); else { document.getElementById('role-form').reset(); refreshData(); }
+        });
+
+        // --- ZAPIS POSTACI (Z OBRAZKIEM I NUMEREM ID) ---
+        document.getElementById('char-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('char-id').value;
+            const file = document.getElementById('char-image').files[0];
+            let fotoUrl = document.getElementById('char-foto-url').value;
+
+            // 1. Jeśli jest nowy plik, wgraj go do Storage
+            if (file) {
+                const fileName = `${Date.now()}_${file.name}`;
+                const { data: uploadData, error: uploadError } = await supabaseClient.storage.from('zdjecia').upload(fileName, file);
+                if (!uploadError) {
+                    const { data: publicUrlData } = supabaseClient.storage.from('zdjecia').getPublicUrl(fileName);
+                    fotoUrl = publicUrlData.publicUrl;
+                }
+            }
+
+            // 2. Przygotuj dane
+            const payload = {
+                imie: document.getElementById('char-name').value,
+                biografia: document.getElementById('char-bio').value,
+                foto_url: fotoUrl
+            };
+            
+            const customId = document.getElementById('char-registry-no').value;
+            if (customId) payload.numer_rejestru = parseInt(customId);
+
+            // 3. Zapisz w bazie
+            let res;
+            if (id) res = await supabaseClient.from('postacie').update(payload).eq('id', id).select().single();
+            else res = await supabaseClient.from('postacie').insert([payload]).select().single();
+
+            if (res.error) alert(res.error.message);
+            else {
+                const postacId = res.data.id;
+                const wybraneRole = Array.from(document.getElementById('char-roles').selectedOptions).map(o => o.value);
+                await supabaseClient.from('postacie_role').delete().eq('postać_id', postacId);
+                if (wybraneRole.length) {
+                    await supabaseClient.from('postacie_role').insert(wybraneRole.map(rId => ({ postać_id: postacId, rola_id: rId })));
+                }
+                document.getElementById('char-form').reset();
+                refreshData();
+            }
+        });
+
+        // --- FUNKCJE POMOCNICZE ---
+        async function refreshData() {
+            const { data: role } = await supabaseClient.from('role').select('*').order('nazwa');
+            const { data: postacie } = await supabaseClient.from('postacie').select('*, postacie_role(rola_id)').order('created_at', {ascending: false});
+
+            const sel = document.getElementById('char-roles');
+            sel.innerHTML = '';
+            role?.forEach(r => sel.innerHTML += `<option value="${r.id}">${r.nazwa}</option>`);
+
+            renderList('role', 'roles-list', role || [], 'nazwa', 'editRole');
+            renderList('postacie', 'chars-list', postacie || [], 'imie', 'editChar');
         }
 
-        renderList('role', 'roles-list', 'nazwa');
-        renderList('postacie', 'chars-list', 'imie');
-    }
-
-    async function renderList(table, elementId, labelKey) {
-        const { data } = await supabaseClient.from(table).select('*');
-        const container = document.getElementById(elementId);
-        container.innerHTML = '<h4>Lista:</h4>';
-        if (data) {
+        function renderList(table, containerId, data, label, editFnName) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '<h4>Lista wpisów:</h4>';
             data.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'list-item';
-                div.innerHTML = `
-                    <span>${item[labelKey]}</span>
-                    <button class="delete" onclick="deleteItem('${table}', '${item.id}')">Usuń</button>
-                `;
+                div.innerHTML = `<span>[${item.numer_rejestru || 'ID'}] ${item[label]}</span>
+                    <div><button onclick='window["${editFnName}"](${JSON.stringify(item).replace(/'/g, "&apos;")})'>Edytuj</button>
+                    <button class="delete" onclick="deleteItem('${table}', '${item.id}')">Usuń</button></div>`;
                 container.appendChild(div);
             });
         }
-    }
 
-    // Funkcja usuwania
-    window.deleteItem = async (table, id) => {
-        if (confirm("Czy na pewno chcesz to usunąć?")) {
-            const { error } = await supabaseClient.from(table).delete().eq('id', id);
-            if (error) alert(error.message);
-            else refreshData();
-        }
-    };
+        window.editRole = (item) => {
+            document.getElementById('role-id').value = item.id;
+            document.getElementById('role-name').value = item.nazwa;
+            document.getElementById('role-desc').value = item.opis;
+            document.getElementById('role-color').value = item.kolor;
+        };
 
-    document.getElementById('logout-btn').onclick = () => location.reload();
-</script>
+        window.editChar = (item) => {
+            document.getElementById('char-id').value = item.id;
+            document.getElementById('char-name').value = item.imie;
+            document.getElementById('char-bio').value = item.biografia;
+            document.getElementById('char-registry-no').value = item.numer_rejestru;
+            document.getElementById('char-foto-url').value = item.foto_url || '';
+            const roleIds = item.postacie_role.map(pr => pr.rola_id);
+            Array.from(document.getElementById('char-roles').options).forEach(opt => opt.selected = roleIds.includes(opt.value));
+        };
+
+        window.deleteItem = async (table, id) => {
+            if (confirm("Usunąć?")) { await supabaseClient.from(table).delete().eq('id', id); refreshData(); }
+        };
+
+        document.getElementById('logout-btn').onclick = () => location.reload();
+    </script>
 </body>
 </html>

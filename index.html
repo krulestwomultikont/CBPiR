@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oficjalny Rejestr Państwowy</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="header-content">
+            <img src="herb.png" alt="Herb Państwa" class="gov-logo">
+            <div class="header-text">
+                <h1>Centralna Baza Postaci i Ról</h1>
+                <p>Oficjalny System Ewidencji i Archiwizacji</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <section class="search-box">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; width: 100%;">
+                <input type="number" id="search-input" placeholder="Numer rejestru...">
+                <button onclick="szukajWRejestrze()">Szukaj po ID</button>
+                
+                <select id="role-search-select">
+                    <option value="">-- Filtruj według roli --</option>
+                </select>
+                <button onclick="szukajPoRoli()">Filtruj Rolę</button>
+                
+                <button onclick="pobierzWszystkich()" style="background-color: #555;">Pokaż Wszystkich</button>
+            </div>
+        </section>
+
+        <div id="loading" style="text-align: center; font-style: italic; margin-bottom: 20px;">
+            Trwa autoryzacja dostępu do bazy danych...
+        </div>
+        
+        <div id="rejestr-container"></div>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://dagmflfhbvgszthpinqd.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhZ21mbGZoYnZnc3p0aHBpbnFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NzY4ODgsImV4cCI6MjA5MjM1Mjg4OH0.cDkiR3zL68xNOi1p7NQeVYoXoVqoQk70SLmhG8xmMFs';
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+        const container = document.getElementById('rejestr-container');
+        const loader = document.getElementById('loading');
+
+        // GŁÓWNA FUNKCJA GENERUJĄCA KARTY
+        async function wyswietlDane(queryPromise) {
+            loader.style.display = 'block';
+            container.innerHTML = '';
+
+            const { data, error } = await queryPromise;
+
+            loader.style.display = 'none';
+
+            if (error) {
+                container.innerHTML = `<p style="color: red; text-align: center;">Błąd systemu: ${error.message}</p>`;
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                container.innerHTML = `<p style="text-align: center;">Brak rekordów spełniających kryteria w bieżącym rejestrze.</p>`;
+                return;
+            }
+
+            data.forEach(postać => {
+                const card = document.createElement('div');
+                card.className = 'card';
+
+                // 1. LOGIKA ZDJĘCIA
+                const fotoHtml = postać.foto_url 
+                    ? `<img src="${postać.foto_url}" style="width: 100%; height: 250px; object-fit: cover; border-radius: 4px; margin: 10px 0; border: 1px solid #c5a059;">` 
+                    : '<div style="height: 20px;"></div>'; // Odstęp jeśli nie ma zdjęcia
+
+                // 2. LOGIKA RÓL (Tagi z kolorami)
+                const tagiRol = postać.postacie_role.map(pr => {
+                    const kolor = pr.role.kolor || '#002366';
+                    return `<span class="role-tag" style="background-color: ${kolor}">${pr.role.nazwa}</span>`;
+                }).join('');
+
+                // 3. SKŁADANIE KARTY
+                card.innerHTML = `
+                    <div class="registry-number">ID: ${postać.numer_rejestru}</div>
+                    ${fotoHtml}
+                    <h2 class="char-name">${postać.imie}</h2>
+                    <div class="role-container">
+                        ${tagiRol || '<span class="role-tag" style="background: #999;">Status: Nieokreślony</span>'}
+                    </div>
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+                    <p class="char-bio">${postać.biografia || 'Brak wpisów biograficznych w aktach.'}</p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // AKCJE WYSZUKIWANIA
+        function pobierzWszystkich() {
+            const query = supabaseClient
+                .from('postacie')
+                .select('*, postacie_role(role(nazwa, kolor))')
+                .order('numer_rejestru', { ascending: false });
+            wyswietlDane(query);
+        }
+
+        function szukajWRejestrze() {
+            const nr = document.getElementById('search-input').value;
+            if (!nr) return;
+            const query = supabaseClient
+                .from('postacie')
+                .select('*, postacie_role(role(nazwa, kolor))')
+                .eq('numer_rejestru', nr);
+            wyswietlDane(query);
+        }
+
+        async function szukajPoRoli() {
+            const wybranaRola = document.getElementById('role-search-select').value;
+            if (!wybranaRola) return;
+            const query = supabaseClient
+                .from('postacie')
+                .select('*, postacie_role!inner(role!inner(nazwa, kolor))')
+                .eq('postacie_role.role.nazwa', wybranaRola);
+            wyswietlDane(query);
+        }
+
+        // ŁADOWANIE RÓL DO LISTY
+        async function zaladujRoleDoWyszukiwarki() {
+            const { data: role } = await supabaseClient.from('role').select('nazwa').order('nazwa');
+            const select = document.getElementById('role-search-select');
+            if (role) {
+                role.forEach(r => {
+                    const opt = document.createElement('option');
+                    opt.value = r.nazwa;
+                    opt.textContent = r.nazwa;
+                    select.appendChild(opt);
+                });
+            }
+        }
+
+        // START STRONY
+        zaladujRoleDoWyszukiwarki();
+        pobierzWszystkich();
+    </script>
+</body>
+</html>

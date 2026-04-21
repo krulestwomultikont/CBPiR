@@ -1,0 +1,176 @@
+/* GŁÓWNE KOLORY PAŃSTWOWE */
+:root {
+    --navy: #002366;      /* Królewski granat */
+    --gold: #c5a059;      /* Przygaszone złoto */
+    --white: #ffffff;
+    --gray-bg: #f5f5f5;
+    --text: #1a1a1a;
+    --border: #d1d1d1;
+}
+
+body {
+    background-color: var(--gray-bg);
+    color: var(--text);
+    font-family: "Georgia", serif; /* Oficjalny, szeryfowy krój */
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+/* NAGŁÓWEK RZĄDOWY */
+header {
+    background-color: var(--navy);
+    color: var(--white);
+    padding: 3rem 1rem;
+    text-align: center;
+    border-bottom: 5px solid var(--gold);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+header p {
+    margin: 10px 0 0;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+/* KONTENER */
+.container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+/* KARTY POSTACI / REJESTRU */
+.card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-left: 8px solid var(--navy);
+    padding: 25px;
+    margin-bottom: 25px;
+    position: relative;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
+}
+
+.registry-number {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-family: "Courier New", monospace;
+    font-weight: bold;
+    color: var(--gold);
+    background: #fdfaf0;
+    padding: 5px 10px;
+    border: 1px solid var(--gold);
+}
+
+.role-container {
+    margin-top: 10px;
+}
+
+.role-tag {
+    display: inline-block;
+    background: var(--navy);
+    color: white;
+    padding: 3px 12px;
+    font-size: 0.8rem;
+    border-radius: 2px;
+    margin-right: 5px;
+    border-bottom: 2px solid var(--gold);
+}
+
+/* FORMULARZE W PANELU ADMINA */
+section {
+    background: white;
+    border: 1px solid var(--border);
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+h2, h3 {
+    color: var(--navy);
+    border-bottom: 1px solid var(--gold);
+    padding-bottom: 10px;
+}
+
+input, textarea, select {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid var(--border);
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+button {
+    background-color: var(--navy);
+    color: white;
+    border: 1px solid var(--gold);
+    padding: 12px 25px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: 0.3s;
+}
+
+button:hover {
+    background-color: #003399;
+    box-shadow: 0 0 10px rgba(197, 160, 89, 0.5);
+}
+
+button.delete {
+    background-color: #8b0000;
+}
+
+/* WYSZUKIWARKA */
+.search-box {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.search-box input {
+    flex: 1;
+}
+
+/* UKRYWANIE ELEMENTÓW */
+.hidden { display: none; }
+
+/* Styl dla kontenera w nagłówku */
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Wyśrodkowanie całości */
+    gap: 25px;               /* Odstęp między herbem a tekstem */
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Styl dla samego herbu */
+.gov-logo {
+    height: 100px;           /* Wysokość herbu - możesz ją zmienić */
+    width: auto;
+    filter: drop-shadow(0 0 5px rgba(0,0,0,0.3)); /* Lekki cień pod herbem */
+}
+
+/* Tekst nagłówka wyrównany do lewej względem herbu */
+.header-text {
+    text-align: left;
+}
+
+/* Responsywność - na telefonach herb będzie nad tekstem */
+@media (max-width: 600px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    .header-text {
+        text-align: center;
+    }
+}
