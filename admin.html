@@ -57,81 +57,88 @@
         </section>
     </div>
 
-    <script type="module">
-        // Importujemy konfigurację (upewnij się, że app.js jest w tym samym folderze)
-        // Jeśli wolisz, możesz tu wkleić kod z app.js (supabaseUrl i supabaseKey)
-        const supabaseUrl = 'https://dagmflfhbvgszthpinqd.supabase.co/rest/v1/';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhZ21mbGZoYnZnc3p0aHBpbnFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NzY4ODgsImV4cCI6MjA5MjM1Mjg4OH0.cDkiR3zL68xNOi1p7NQeVYoXoVqoQk70SLmhG8xmMFs';
-        const supabase = exports.supabase.createClient(supabaseUrl, supabaseKey);
+    <script>
+    // 1. Dane dostępowe (Upewnij się, że są poprawne!)
+    const supabaseUrl = 'https://dagmflfhbvgszthpinqd.supabase.co/rest/v1/';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhZ21mbGZoYnZnc3p0aHBpbnFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NzY4ODgsImV4cCI6MjA5MjM1Mjg4OH0.cDkiR3zL68xNOi1p7NQeVYoXoVqoQk70SLmhG8xmMFs';
 
-        const loginForm = document.getElementById('login-form');
-        const loginSection = document.getElementById('login-section');
-        const adminPanel = document.getElementById('admin-panel');
-        const charRoleSelect = document.getElementById('char-role');
+    // 2. Inicjalizacja klienta w wersji przeglądarkowej
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-        // --- 1. LOGOWANIE ---
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
+    // Pobranie elementów z HTML
+    const loginForm = document.getElementById('login-form');
+    const loginSection = document.getElementById('login-section');
+    const adminPanel = document.getElementById('admin-panel');
+    const charRoleSelect = document.getElementById('char-role');
 
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    // --- 1. LOGOWANIE ---
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
 
-            if (error) alert("Błąd: " + error.message);
-            else {
-                loginSection.classList.add('hidden');
-                adminPanel.classList.remove('hidden');
-                refreshData();
-            }
-        });
+        // Używamy supabaseClient zamiast supabase
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
-        // --- 2. DODAWANIE ROLI ---
-        document.getElementById('role-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const nazwa = document.getElementById('role-name').value;
-            const opis = document.getElementById('role-desc').value;
+        if (error) {
+            alert("Błąd logowania: " + error.message);
+        } else {
+            console.log("Zalogowano!", data);
+            loginSection.classList.add('hidden');
+            adminPanel.classList.remove('hidden');
+            refreshData();
+        }
+    });
 
-            const { error } = await supabase.from('role').insert([{ nazwa, opis }]);
-            if (error) alert(error.message);
-            else {
-                e.target.reset();
-                refreshData();
-            }
-        });
+    // --- 2. DODAWANIE ROLI ---
+    document.getElementById('role-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nazwa = document.getElementById('role-name').value;
+        const opis = document.getElementById('role-desc').value;
 
-        // --- 3. DODAWANIE POSTACI ---
-        document.getElementById('char-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const imie = document.getElementById('char-name').value;
-            const biografia = document.getElementById('char-bio').value;
-            const rola_id = document.getElementById('char-role').value;
+        const { error } = await supabaseClient.from('role').insert([{ nazwa, opis }]);
+        if (error) alert("Błąd dodawania roli: " + error.message);
+        else {
+            e.target.reset();
+            refreshData();
+        }
+    });
 
-            const { error } = await supabase.from('postacie').insert([{ imie, biografia, rola_id }]);
-            if (error) alert(error.message);
-            else {
-                e.target.reset();
-                refreshData();
-            }
-        });
+    // --- 3. DODAWANIE POSTACI ---
+    document.getElementById('char-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const imie = document.getElementById('char-name').value;
+        const biografia = document.getElementById('char-bio').value;
+        const rola_id = document.getElementById('char-role').value;
 
-        // --- 4. ODŚWIEŻANIE DANYCH ---
-        async function refreshData() {
-            // Pobierz role do dropdowna
-            const { data: role } = await supabase.from('role').select('*');
-            charRoleSelect.innerHTML = '<option value="">-- Wybierz rolę --</option>';
+        const { error } = await supabaseClient.from('postacie').insert([{ imie, biografia, rola_id }]);
+        if (error) alert("Błąd dodawania postaci: " + error.message);
+        else {
+            e.target.reset();
+            refreshData();
+        }
+    });
+
+    // --- 4. ODŚWIEŻANIE DANYCH ---
+    async function refreshData() {
+        // Pobierz role do listy rozwijanej
+        const { data: role } = await supabaseClient.from('role').select('*');
+        charRoleSelect.innerHTML = '<option value="">-- Wybierz rolę --</option>';
+        if (role) {
             role.forEach(r => {
                 charRoleSelect.innerHTML += `<option value="${r.id}">${r.nazwa}</option>`;
             });
-
-            // Pobierz i wyświetl listy z przyciskami usuwania
-            renderList('role', 'roles-list', 'nazwa');
-            renderList('postacie', 'chars-list', 'imie');
         }
 
-        async function renderList(table, elementId, labelKey) {
-            const { data } = await supabase.from(table).select('*');
-            const container = document.getElementById(elementId);
-            container.innerHTML = '<h4>Lista:</h4>';
+        renderList('role', 'roles-list', 'nazwa');
+        renderList('postacie', 'chars-list', 'imie');
+    }
+
+    async function renderList(table, elementId, labelKey) {
+        const { data } = await supabaseClient.from(table).select('*');
+        const container = document.getElementById(elementId);
+        container.innerHTML = '<h4>Lista:</h4>';
+        if (data) {
             data.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'list-item';
@@ -142,18 +149,18 @@
                 container.appendChild(div);
             });
         }
+    }
 
-        // Funkcja usuwania (dostępna globalnie dla przycisków)
-        window.deleteItem = async (table, id) => {
-            if (confirm("Czy na pewno chcesz to usunąć?")) {
-                const { error } = await supabase.from(table).delete().eq('id', id);
-                if (error) alert(error.message);
-                else refreshData();
-            }
-        };
+    // Funkcja usuwania
+    window.deleteItem = async (table, id) => {
+        if (confirm("Czy na pewno chcesz to usunąć?")) {
+            const { error } = await supabaseClient.from(table).delete().eq('id', id);
+            if (error) alert(error.message);
+            else refreshData();
+        }
+    };
 
-        document.getElementById('logout-btn').onclick = () => location.reload();
-
-    </script>
+    document.getElementById('logout-btn').onclick = () => location.reload();
+</script>
 </body>
 </html>
